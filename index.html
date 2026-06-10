@@ -30,8 +30,17 @@
   .fbtn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
   .filters input[type=text]{border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;min-width:220px}
   .count{margin-left:auto;color:var(--muted);font-size:13px}
-  .tablecard{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:6px 0 40px}
-  table{border-collapse:collapse;width:100%;font-size:13px}
+  .tablecard{background:#fff;border:1px solid var(--line);border-radius:10px;margin:6px 0 40px;
+    overflow-x:auto;-webkit-overflow-scrolling:touch}   /* 모바일 가로 스와이프 스크롤 */
+  table{border-collapse:collapse;width:100%;min-width:1100px;font-size:13px} /* min-width로 칼럼 압축 방지 → 가로 스크롤 생성 */
+  .scrollhint{display:none;color:var(--muted);font-size:12px;margin:4px 2px}
+  @media (max-width:768px){
+    header{padding:14px 16px;flex-direction:column;gap:8px}
+    header .upd{text-align:left}
+    .wrap{padding:0 12px}
+    .filters input[type=text]{min-width:140px;flex:1}
+    .scrollhint{display:block}
+  }
   thead th{background:var(--navy);color:#fff;text-align:left;padding:12px 14px;font-weight:600;white-space:nowrap}
   tbody td{padding:14px;border-top:1px solid var(--line);vertical-align:top;line-height:1.5}
   tbody tr:hover{background:#fafbfc}
@@ -89,6 +98,7 @@
     <span class="count"><b id="shown">0</b>건</span>
   </div>
 
+  <div class="scrollhint">↔ 표를 좌우로 밀어서 전체 컬럼을 볼 수 있습니다</div>
   <div class="tablecard">
     <table>
       <thead><tr>
