@@ -11,8 +11,8 @@
 
   /* Header */
   .header { background: #1F3864; color: white; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
-  .header h1 { font-size: 16px; font-weight: 700; }
-  .header .sub { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+  .h1 { font-size: 16px; font-weight: 700; }
+  .sub { font-size: 11px; opacity: 0.7; margin-top: 2px; }
 
   /* Stats bar */
   .stats { display: flex; gap: 10px; padding: 12px 20px; background: white; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
@@ -32,7 +32,7 @@
   .filter-btn.active { background: #1F3864; color: white; border-color: #1F3864; }
   .filter-btn.active-e { background: #52C41A; border-color: #52C41A; color: white; }
   .filter-btn.active-s { background: #1677FF; border-color: #1677FF; color: white; }
-  .filter-btn.active-g { background: #FAAD14; border-color: $FAAD14; color: #333; }
+  .filter-btn.active-g { background: #FAAD14; border-color: #FAAD14; color: #333; }
   .search-input { border: 1px solid #d9d9d9; border-radius: 4px; padding: 4px 10px; font-size: 12px; font-family: Arial; width: 200px; outline: none; }
   .search-input:focus { border-color: #1F3864; }
   .result-count { margin-left: auto; font-size: 11px; color: #888; }
@@ -49,26 +49,36 @@
   .cat-S { background: #E6F4FF; color: #0958D9; border: 1px solid #91CAFF; }
   .cat-G { background: #FFFBE6; color: #D48806; border: 1px solid #FFE58F; }
   .imp-상 { color: #CF1322; font-weight: 700; }
-  .imp-쬑 { color: #D46B08; }
+  .imp-중 { color: #D46B08; }
   .imp-하 { color: #595959; }
   .region-tag { font-size: 10px; color: #888; background: #f5f5f5; border-radius: 3px; padding: 1px 5px; }
   .title-link { color: #1F3864; text-decoration: none; font-weight: 600; }
   .title-link:hover { text-decoration: underline; }
   .no-result { text-align: center; color: #bbb; padding: 40px; font-size: 13px; }
   .date-cell { white-space: nowrap; font-size: 11px; color: #888; }
+
+  /* Loading */
+  .loading-bar { height: 3px; background: linear-gradient(90deg, #1F3864 30%, #52C41A 60%, #1677FF 100%); background-size: 200% 100%; animation: slide 1.2s linear infinite; }
+  @keyframes slide { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+  .error-msg { color: #CF1322; font-size: 12px; padding: 4px 8px; }
 </style>
 </head>
 <body>
 
+<div id="loadingBar" class="loading-bar"></div>
+
 <div class="header">
   <div>
-    <div class="h1">📊 ESG 뉴스 트래커</div>
-    <div class="sub">날짜 · 카테고리 · 중요도 · 기업명으로 조회</div>
+    <div class="h1">📊 ESG 뉴스 인사이트</div>
+    <div class="sub">규제 동향 · 기관투자자 동향 · 기업 뉴스 · 인사이트</div>
   </div>
-  <div id="lastUpdated" style="font-size:11px;opacity:.7;"></div>
+  <div style="text-align:right">
+    <div id="lastUpdated" style="font-size:11px;opacity:.7;"></div>
+    <div id="sheetLink" style="font-size:10px;margin-top:3px;"></div>
+  </div>
 </div>
 
-<div class="stats" id="statsBar"></div>
+<div class="stats" id="statsBar"><div class="stat-chip">데이터 로딩 중...</div></div>
 
 <div class="filters">
   <div class="filter-group">
@@ -112,38 +122,100 @@
         <th style="width:55px">중요도</th>
       </tr>
     </thead>
-    <tbody id="tableBody"></tbody>
+    <tbody id="tableBody"><tr><td colspan="8" class="no-result">데이터 로딩 중...</td></tr></tbody>
   </table>
 </div>
 
 <script>
-// ESG_DATA_START
-const NEWS_DATA = [
-  {date:"2026-06-09",category:"E",region:"해외",title:"美 법원, 청정에너지 세액공제 제한에 제동…풍력·태양광 5%룰 재검토",summary:"미국 법원이 트럼프 행정부의 청정에너지 세액공제 제한 정책에 제동을 걸었다. 풍력·태양광 사업의 '5% 지출 기준' 폐지 지침에 대해 재검토를 명령하며, 인허가 지연 장기화로 금융비용·장비비 부담이 확대될 수 있다는 우려가 나온다.",implication:"미국 청정에너지 세액공제 관련 법적 불확실성 지속. 투자자들은 미국 재생에너지 프로젝트의 규제 리스크를 모니터링해야.",companies:"미국 재생에너지 기업 전반",importance:"상",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15709"},
-  {date:"2026-06-09",category:"G",region:"국내",title:"금융위, 모회사의 자회사 지속가능성 정보 요구권 제도화 추진",summary:"금융위원회가 모회사가 자회사에 ESG 등 지속가능성 정보 제출을 요구할 수 있도록 하는 제도 마련을 추진한다. 공급망 ESG 공시 강화의 일환으로, 상장 대기업의 공시 부담이 확대될 전망이다.",implication:"국내 대기업 그룹사의 지속가능성 정보 관리 의무 확대 예정. 자회사 ESG 데이터 수집 체계 구축이 시급해질 수 있음.",companies:"금융위원회, 코스피 대형그룹사",importance:"상",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15542"},
-  {date:"2026-06-09",category:"E",region:"해외",title:"EU, 탄소배출권 시장 개편…산업에 40억 유로 추가 배출권 제안",summary:"유럽집행위원회가 EU ETS 개편안을 발표하며 2026~2030년 산업 부문에 약 40억 유로 규모의 추가 배출권을 제공하는 방안을 제안했다. 탄소 가격 안정화와 산업 경쟁력 보호를 동시에 고려한 조치다.",implication:"EU ETS 개편으로 유럽 내 탄소 비용 구조 변화 예고. 탄소 집약 산업의 규제 부담 일부 완화 가능성이 있으나 장기 탈탄소 압력은 유지.",companies:"European Commission, 유럽 제조·에너지 기업",importance:"상",url:"https://www.esgtoday.com/eu-commission-proposes-ets-update-adding-e4-billion-in-allowances-to-industry/"},
-  {date:"2026-06-09",category:"E",region:"해외",title:"UN 보고서: 기후변화로 데이터간 가대앭대는 숁향권이 경고",summary:"정보이 뫩안을 어족자원 비율이 2019년 64.6%에서 2021년 62.3%로 감소했다. 해수면 상승·산호초 훼손으로 관광·물류·에너지 산업도 영향권이며, 향후 10년이 해양 건강 회복의 결정적 시기라고 경고한다.",implication:"해양 생태계 리스크가 식량 안보·공급망 리스크로 연결될 가능성. 수산업·해양 관련 기업의 TNFD 자연 관련 리스크 공시 중요성 부각.",companies:"UN, 수산·해양 관련 기업",importance:"중",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15710"},
-  {date:"2026-06-09",category:"E",region:"해외",title:"탄소 감축 수단 바이오에너지, 산림 훼손 우려 키워",summary:"탄소 감축 수단으로 확대되는 바이오에너지가 오히려 산림 훼손 우려를 키운다는 지적이 나온다. 목재 펠릿 수요 증가로 원시림 벌채가 늘어나는 역설적 상황이 전개되고 있다.",implication:"바이오에너지 공급망의 산림 훼손 리스크 점검 필요. 바이오에너지 관련 기업의 원자재 조달 관행과 지속가능성 인증 여부에 주목해야.",companies:"바이오에너지·목재 펠릿 관련 기업",importance:"중",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15708"},
-  {date:"2026-06-09",category:"E",region:"국내",title:"정부, 하반기 청정수소발전 500GWh 구매 추진",summary:"한국 정부가 올 하반기 청정수소발전으로 생산한 전력 500GWh를 구매한다는 계획을 발표했다. 청정수소 시장 활성화와 에너지 전환 가속화를 위한 조치로 국내 수소 생태계에 신호탄이 될 것으로 기대된다.",implication:"국내 청정수소 발전 시장 성장 기대. 수소 관련 기업 및 에너지 전환 투자 기회 확대.",companies:"산업통상자원부, SK E&S, 한화솔루션",importance:"중",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15702"},
-  {date:"2026-06-09",category:"E",region:"국내",title:"폐기물에서 산업 원료까지…재생원료 시장 허브 법령 필요",summary:"국내에서 폐기물을 산업 원료로 전환하는 재생원료 시장 활성화를 위해 '허브 법령' 마련이 필요하다는 목소리가 높아지고 있다. 순환경제 전환 속도를 높이기 위한 제도적 기반 구축이 시급하다는 지적이다.",implication:"순환경제 관련 규제·인프라 강화 예상. 폐기물 처리 및 재생원료 관련 기업에 정책적 기회 생길 가능성.",companies:"환경부, 국내 폐기물·재활용 기업",importance:"중",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15706"},
-  {date:"2026-06-09",category:"G",region:"국내",title:"삼성, AI 대전환 본격화…전 관계사 모든 업무에 AI 도입",summary:"삼성이 전체 관계사의 모든 업무에 AI를 도입하는 'AI 대전환'을 공식화했다. CEO가 직접 AI 전환을 이끌며 사별 AI 전담 조직도 신설한다. 외부 생성형 AI 공식 도입과 전 사장단 대상 AI 집중 교육도 시행된다.",implication:"대기업 AI 거버넌스 체계 구축이 화두로 부상. AI 도입에 따른 데이터 보안·윤리 리스크 관리 체계 강화도 함께 요구됨.",companies:"삼성전자, 삼성그룹",importance:"중",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15711"},
-  {date:"2026-06-08",category:"G",region:"해외",title:"SpaceX IPO 앞두고 기관투자자 거버넌스 우려 표명",summary:"SpaceX가 6월 12일 나스닥 상장 예정인 가운데, Morningstar·덴마크 AkademikerPension 등 기관투자자가 이중주식구조·이사회 독립성 부재를 이유로 우려 표명. AkademikerPension은 투자 블랙리스트에 추가.",implication:"이중주식구조 기업에 대한 ESG 기관투자자의 의결권 행사 기준 강화 추세. 국내 오너 경영 기업의 지배구조 평가 기준 재점검 필요.",companies:"SpaceX, AkademikerPension, Morningstar",importance:"상",url:"https://www.esgdive.com/news/institutional-investors-spacex-ipo-governance-concerns-share-structure-board-composition/822254/"},
-  {date:"2026-06-08",category:"G",region:"해외",title:"GRI, 오염 공시 기준 초안 의견수렴 마감",summary:"GRI가 발표한 대기오염·토양오염·중대사고(유류 유출 등) 공시 기준 초안에 대한 공개 의견수렴이 6월 8일 마감. 최종 기준은 2027년 발표 예정.",implication:"기업의 오염 관련 공시 범위 확대 예고. CSRD·ISSB와의 연계 강화로 글로벌 오염 공시 표준화 진전. 국내 화학·제조업 대응 준비 필요.",companies:"GRI, 글로벌 제조·화학 기업",importance:"중",url:"https://www.esgtoday.com/gri-releases-proposed-pollution-disclosure-standards/"},
-  {date:"2026-06-08",category:"E",region:"해외",title:"TD, Deep Sky와 10년 탄소제거 계약 체결",summary:"캐나다 TD Bank가 탄소포집 기업 Deep Sky와 10년간 탄소 제거 계약 체결. 북미 주요 은행의 탄소 크레딧 포트폴리오 다각화 움직임.",implication:"주요 금융기관의 CDR 시장 참여 가속화. 탄소 크레딧 수요 확대 및 관련 기업 가치 상승 기대.",companies:"TD Bank, Deep Sky",importance:"상",url:"https://www.esgtoday.com/td-signs-10-year-carbon-removal-deal-with-deep-sky/"},
-  {date:"2026-06-08",category:"E",region:"해외",title:"Waymo, 폐 EV 배터리 전력망 저장용 재활용",summary:"Alphabet 자회사 Waymo가 B2U와 협력해 폐 EV 배터리를 배터리 에너지 저장 시스템(BESS)으로 재활용. 텍사스·캘리포니아 수백 MW 규모 배치 계획.",implication:"빅테크 순환경제 전략 구체화. EV 배터리 재활용 시장 성장 및 관련 규제·투자 기회 확대.",companies:"Alphabet, Waymo, B2U",importance:"중",url:"https://www.esgtoday.com/alphabets-waymo-to-repurpose-used-ev-batteries-for-grid-storage/"},
-  {date:"2026-06-08",category:"E",region:"국내",title:"AI 데이터센터 환경비용 급증…탄소·물·토지 부담 막대",summary:"AI 인프라 확산으로 데이터센터의 탄소뿐 아니라 냉각용 수자원·토지 사용 환경비용 급증. AI 전력 소비 전년 대비 50% 증가.",implication:"AI 기업·빅테크의 ESG 환경 리스크 부각. 수자원·토지 공시 강화 압박 예상. 국내 데이터센터 규제 논의 본격화 가능성.",companies:"삼성전자, SK하이닉스, 네이버, 카카오",importance:"상",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15695"},
-  {date:"2026-06-08",category:"E",region:"해외",title:"저탄소 투자, 중국 집중…미국 투자 동력 약화",summary:"글로벌 저탄소 산업 투자가 중국에 집중되는 반면, 미국은 트럼프 정책 변화로 투자 실행력 약화. 미·중 격차 확대.",implication:"미국 IRA 축소 영향 본격화. 한국 기업의 미국 내 청정에너지 사업 리스크 점검 필요.",companies:"미·중 청정에너지 기업 전반",importance:"상",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15698"},
-  {date:"2026-06-08",category:"E",region:"해외",title:"일본, 2050년대까지 원자로 최대 14기 교체 추진",summary:"일본 정부, 노후 원전 폐쇄 대신 최대 14기 신형 원자로 교체 계획 발표. 탄소중립 달성을 위한 원자력 의존도 유지 전략.",implication:"원자력의 탄소중립 수단 재부상. 국내 원전 수출 기회에 긍정적. 원전 ESG 평가 기준 재정립 논의 주목.",companies:"일본 전력사, 두산에너빌리티",importance:"중",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15696"},
-  {date:"2026-06-08",category:"E",region:"해외",title:"생물다양성 손실, 국가 신용등급 하락 요인으로 부상",summary:"글로벌 금융시장이 생물다양성 손실 리스크를 저평가한다는 연구 발표. 생물다양성 손실이 국가 신용등급에 영향 가능.",implication:"TNFD 공시 기준 도입 가속화 예상. 자연자본 리스크 평가가 ESG 투자 필수 항목으로 부상.",companies:"글로벌 금융기관, 자연자원 의존 기업",importance:"중",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15700"},
-  {date:"2026-06-08",category:"S",region:"해외",title:"네슬레-ILO, 커피 공급망 인권 개선 프로젝트 출범",summary:"Nestlé와 ILO가 브라질·콜롬비아·멕시코 커피 공급망 노동권 보호를 위한 2년 프로젝트 체결.",implication:"EU CSDDD 대응 선제적 조치 사례. 국내 수출 대기업도 공급망 인권 리스크 관리 강화 요구 증대.",companies:"Nestlé, ILO",importance:"중",url:"https://www.esgdive.com/news/nestle-ilo-ink-partnership-to-support-labor-rights-in-coffee-supply-chains/816495/"},
-  {date:"2026-06-08",category:"G",region:"해외",title:"영국 FCA, 투자상품 TCFD 기반 기후보고 폐지 제안",summary:"영국 금융감독청(FCA)이 투자상품 대상 TCFD 기반 기후 공시 요건 폐지 제안. 보고 부담 완화 및 ISSB 기준으로 통합 가능성 시사.",implication:"글로벌 ESG 공시 기준 통합(TCFD→ISSB) 가속화 신호. 한국 금융당국 공시 로드맵에도 영향 가능성.",companies:"영국 자산운용사, 글로벌 투자기관",importance:"상",url:"https://www.esgtoday.com/uk-proposes-dropping-tcfd-based-climate-reporting-for-investment-products/"},
-  {date:"2026-06-08",category:"G",region:"국내",title:"정용진, 13년 만에 이마트 등기이사 복귀",summary:"정용진 신세계 회장이 13년 만에 이마트 등기이사로 복귀. 실적 부진에 따른 오너 직접 경영 전면 나섬.",implication:"오너 경영 강화가 이사회 독립성에 미치는 영향 주목. 지배구조 개선 요구와의 충돌 가능성 검토 필요.",companies:"이마트, 신세계그룹",importance:"중",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15701"},
-  {date:"2026-06-08",category:"G",region:"국내",title:"금융위, ESG 지속가능성 공시 로드맵 이달 발표 목표",summary:"금융위원회가 국내 ESG 지속가능성 공시 로드맵을 6월 내 발표할 계획. ISSB 기반 의무화 일정 확정 임박.",implication:"국내 대형 상장사의 ESG 공시 준비 본격화 신호. 공시 인프라 투자 및 제3자 검증 수요 급증 예상.",companies:"코스피 대형 상장사 전반",importance:"상",url:"https://www.esgeconomy.com/news/articleView.html?idxno=15707"}
-];
-// ESG_DATA_END
+// ── 데이터 소스: Google Sheets (웹에 게시된 CSV) ─────────────────
+const SHEET_ID = '1OPeL9VN6kmalit448EPjO-ke2Ql0RoWzWVwqnXrUV48';
+const CSV_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv`;
 
+let NEWS_DATA = [];
 const filters = { cat: "전체", imp: "전체", region: "전체" };
 
+// ── CSV 파서 (따옴표 포함 필드 처리) ─────────────────────────────
+function parseCSV(text) {
+  const results = [];
+  const rows = [];
+  let cur = '', inQ = false;
+  const chars = [...text];
+  for (let i = 0; i < chars.length; i++) {
+    const c = chars[i];
+    if (c === '"') {
+      if (inQ && chars[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if ((c === '\n' || c === '\r') && !inQ) {
+      rows.push(cur); cur = '';
+      if (c === '\r' && chars[i+1] === '\n') i++;
+    } else {
+      cur += c;
+    }
+  }
+  if (cur) rows.push(cur);
+
+  for (const row of rows) {
+    const fields = [];
+    let f = '', inq = false;
+    for (let i = 0; i < row.length; i++) {
+      const c = row[i];
+      if (c === '"') {
+        if (inq && row[i+1] === '"') { f += '"'; i++; }
+        else inq = !inq;
+      } else if (c === ',' && !inq) {
+        fields.push(f); f = '';
+      } else {
+        f += c;
+      }
+    }
+    fields.push(f);
+    results.push(fields);
+  }
+  return results;
+}
+
+// ── 데이터 로드 ────────────────────────────────────────────────
+async function loadData() {
+  const bar = document.getElementById('loadingBar');
+  bar.style.display = 'block';
+  try {
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    // 헤더: date,category,region,title,summary,implication,companies,importance,url
+    NEWS_DATA = rows.slice(1)
+      .filter(r => r.length >= 9 && r[0] && r[0].match(/^\d{4}-\d{2}-\d{2}$/))
+      .map(r => ({
+        date: r[0].trim(),
+        category: r[1].trim(),
+        region: r[2].trim(),
+        title: r[3].trim(),
+        summary: r[4].trim(),
+        implication: r[5].trim(),
+        companies: r[6].trim(),
+        importance: r[7].trim(),
+        url: r[8].trim()
+      }));
+    renderStats();
+    renderTable();
+    // 시트 링크 표시
+    document.getElementById('sheetLink').innerHTML =
+      `<a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}" target="_blank" style="color:rgba(255,255,255,0.6);font-size:10px;">📄 Google Sheets 편집</a>`;
+  } catch(e) {
+    document.getElementById('tableBody').innerHTML =
+      `<tr><td colspan="8" class="no-result" style="color:#CF1322;">
+        데이터 로드 실패: ${e.message}<br>
+        <small style="color:#888">Google Sheet를 '웹에 게시'했는지 확인해 주세요.<br>
+        파일 ↑ 공유 ↑ 웹에 게시 ↑ CSV 형식으로 게시</small>
+      </td></tr>`;
+    document.getElementById('statsBar').innerHTML = '<div class="stat-chip" style="color:#CF1322">⚠ 로드 실패</div>';
+  } finally {
+    bar.style.display = 'none';
+  }
+}
+
+// ── 필터 & 렌더링 ─────────────────────────────────────────────
 function setFilter(type, val, btn) {
   filters[type] = val;
   document.querySelectorAll(`[data-filter="${type}"]`).forEach(b => {
@@ -172,11 +244,8 @@ function getFiltered() {
 function renderTable() {
   const rows = getFiltered();
   const body = document.getElementById("tableBody");
-  document.getElementById("resultCount").textContent = `${rows.length}몱</button>
-    b.classList.add("active-g");
-    b.classList.add("active-s");
-    b.classList.add("active-e");
-    if (!rows.length) {
+  document.getElementById("resultCount").textContent = `${rows.length}건`;
+  if (!rows.length) {
     body.innerHTML = `<tr><td colspan="8" class="no-result">조건에 맞는 뉴스가 없습니다.</td></tr>`;
     return;
   }
@@ -205,12 +274,10 @@ function renderStats() {
     <div class="stat-chip"><span class="dot dot-s"></span>S ${s}건</div>
     <div class="stat-chip"><span class="dot dot-g"></span>G ${g}건</div>
     <div class="stat-chip" style="margin-left:auto;background:none;color:#888;font-size:11px">수집 기간: ${dates[0]} ~ ${dates[dates.length-1]}</div>`;
-  const latest = dates[dates.length - 1];
-  document.getElementById("lastUpdated").textContent = `최근 업데이트: ${latest}`;
+  document.getElementById("lastUpdated").textContent = `최근 업데이트: ${dates[dates.length - 1]}`;
 }
 
-renderStats();
-renderTable();
+loadData();
 </script>
 </body>
 </html>
