@@ -127,9 +127,9 @@
 </div>
 
 <script>
-// ── 데이터 소스: Google Sheets (웹에 게시된 CSV) ─────────────────
+// ── 데이터 소스: Google Sheets (웹에 게시된 CSV) ──────────────────
 const SHEET_ID = '1OPeL9VN6kmalit448EPjO-ke2Ql0RoWzWVwqnXrUV48';
-const CSV_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv`;
+const CSV_URL  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTkqoO8j_aO2cva9TD5iTUQBgVAqgTfKtCj_XVekuWcuTOj44TrkdiY9h4FKMn3KOxXv6iQ67NjMItC/pub?gid=2019829128&single=true&output=csv';
 
 let NEWS_DATA = [];
 const filters = { cat: "전체", imp: "전체", region: "전체" };
@@ -207,7 +207,7 @@ async function loadData() {
       `<tr><td colspan="8" class="no-result" style="color:#CF1322;">
         데이터 로드 실패: ${e.message}<br>
         <small style="color:#888">Google Sheet를 '웹에 게시'했는지 확인해 주세요.<br>
-        파일 ↑ 공유 ↑ 웹에 게시 ↑ CSV 형식으로 게시</small>
+        파일 → 공유 → 웹에 게시 → CSV 형식으로 게시</small>
       </td></tr>`;
     document.getElementById('statsBar').innerHTML = '<div class="stat-chip" style="color:#CF1322">⚠ 로드 실패</div>';
   } finally {
