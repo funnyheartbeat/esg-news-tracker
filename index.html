@@ -167,43 +167,37 @@ const CSV_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx
 let NEWS_DATA = [];
 const filters = { cat: "전체", imp: "전체", region: "전체" };
 
-// ── CSV 파서 (따옴표 포함 필드 처리) ─────────────────────────────
+// ── CSV 파서 (단일 패스 — 따옴표 안 쉼표·줄바꿈 정확히 처리) ─────
 function parseCSV(text) {
   const results = [];
-  const rows = [];
-  let cur = '', inQ = false;
-  const chars = [...text];
-  for (let i = 0; i < chars.length; i++) {
-    const c = chars[i];
-    if (c === '"') {
-      if (inQ && chars[i+1] === '"') { cur += '"'; i++; }
-      else inQ = !inQ;
-    } else if ((c === '\n' || c === '\r') && !inQ) {
-      rows.push(cur); cur = '';
-      if (c === '\r' && chars[i+1] === '\n') i++;
-    } else {
-      cur += c;
-    }
-  }
-  if (cur) rows.push(cur);
-
-  for (const row of rows) {
-    const fields = [];
-    let f = '', inq = false;
-    for (let i = 0; i < row.length; i++) {
-      const c = row[i];
+  let fields = [], field = '', inQ = false;
+  const len = text.length;
+  for (let i = 0; i < len; i++) {
+    const c = text[i];
+    if (inQ) {
       if (c === '"') {
-        if (inq && row[i+1] === '"') { f += '"'; i++; }
-        else inq = !inq;
-      } else if (c === ',' && !inq) {
-        fields.push(f); f = '';
+        if (text[i+1] === '"') { field += '"'; i++; }
+        else inQ = false;
       } else {
-        f += c;
+        field += c;
+      }
+    } else {
+      if (c === '"') {
+        inQ = true;
+      } else if (c === ',') {
+        fields.push(field); field = '';
+      } else if (c === '\n' || c === '\r') {
+        fields.push(field); field = '';
+        if (fields.some(f => f !== '')) results.push(fields);
+        fields = [];
+        if (c === '\r' && text[i+1] === '\n') i++;
+      } else {
+        field += c;
       }
     }
-    fields.push(f);
-    results.push(fields);
   }
+  fields.push(field);
+  if (fields.some(f => f !== '')) results.push(fields);
   return results;
 }
 
